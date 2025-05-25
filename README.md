@@ -64,43 +64,6 @@ flutter run
 
 ---
 
-## ✅ To-Do (Improvements)
-
-- Add support for attachments 📎
-- Implement mail reply and forward
-- Notification for new emails
-- Theme customization (dark mode)
-
----
-
-## 📧 Screenshots (Optional)
-
-_Add screenshots of login, inbox, and mail detail screens here._
-
----
-
-## 📄 License
-
-MIT License
-
----
-
-## 👤 Author
-
-Developed as part of a student utility project for IIT Kanpur. Maintained by [Your Name].
-
----
-
-## 📁 What's Inside the ZIP
-
-This ZIP contains:
-- A `README.md` file with full documentation
-- Folder structure ready to be dropped into a GitHub repo or project directory
-
-Use this as your project's landing page to help others understand and use your Flutter mail client.
-
----
-
 ## 🧑‍💻 How to Use the App
 
 Here’s a step-by-step guide on how to use the Flutter Mail Client once it’s running:
