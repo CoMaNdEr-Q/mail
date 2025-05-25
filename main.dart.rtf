@@ -1,0 +1,942 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fmodern\fcharset0 Courier;\f1\fmodern\fcharset0 Courier-Oblique;}
+{\colortbl;\red255\green255\blue255;\red195\green123\blue90;\red23\green23\blue26;\red89\green158\blue96;
+\red174\green176\blue183;\red38\green157\blue169;\red185\green101\blue173;\red71\green149\blue242;\red72\green151\blue245;
+\red164\green160\blue78;}
+{\*\expandedcolortbl;;\csgenericrgb\c76471\c48235\c35294;\csgenericrgb\c9020\c9020\c10196;\csgenericrgb\c34902\c61961\c37647;
+\csgenericrgb\c68235\c69020\c71765;\csgenericrgb\c14902\c61569\c66275;\csgenericrgb\c72549\c39608\c67843;\csgenericrgb\c27843\c58431\c94902;\csgenericrgb\c28235\c59216\c96078;
+\csgenericrgb\c64314\c62745\c30588;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs26 \cf2 \cb3 import \cf4 'package:flutter/material.dart'\cf5 ;\
+\cf2 import \cf4 'package:flutter_html/flutter_html.dart'\cf5 ;\
+\cf2 import \cf4 'package:enough_mail/enough_mail.dart'\cf5 ;\
+\cf2 import \cf4 'package:flutter_secure_storage/flutter_secure_storage.dart'\cf5 ;\
+\cf2 import \cf4 'mime_composer_screen.dart'\cf5 ;\
+\cf2 import \cf4 'package:flutter_html_table/flutter_html_table.dart'\cf5 ;\
+\cf2 import \cf4 'dart:convert'\cf5 ;\
+\
+\
+\cf2 const \cf5 int number_of_mail_fetched = \cf6 50\cf5 ;\
+\
+\cf2 class \cf5 MessageWithSequence \{\
+  \cf2 final \cf5 MimeMessage \cf7 message\cf5 ;\
+  \cf2 final \cf5 int \cf7 sequenceNumber\cf5 ;\
+  bool \cf7 isFlagged\cf5 ;\
+\
+  MessageWithSequence(\{\
+    \cf2 required this\cf5 .\cf7 message\cf5 ,\
+    \cf2 required this\cf5 .\cf7 sequenceNumber\cf5 ,\
+    \cf2 this\cf5 .\cf7 isFlagged \cf5 = \cf2 false\cf5 ,\
+  \});\
+\}\
+\
+\cf2 void \cf8 main\cf5 () \{\
+  runApp(\cf2 const \cf9 MyMailApp\cf5 ());\
+\}\
+\
+\
+\cf2 class \cf5 MimeComposerScreen \cf2 extends \cf5 StatefulWidget \{\
+  \cf2 final \cf5 String \cf7 defaultFromEmail\cf5 ;\
+  \cf2 final \cf5 Map<String, \cf2 dynamic\cf5 >? \cf7 draftData\cf5 ;\
+\
+  \cf2 const \cf5 MimeComposerScreen(\{\
+    Key? key,\
+    \cf2 required this\cf5 .\cf7 defaultFromEmail\cf5 ,\
+    \cf2 this\cf5 .\cf7 draftData\cf5 ,\
+  \}) : \cf2 super\cf5 (key: key);\
+\
+  \cf10 @override\
+  \cf5 State<MimeComposerScreen> \cf9 createState\cf5 () => \cf9 _MimeComposerScreenState\cf5 ();\
+\}\
+\
+\cf2 class \cf5 _MimeComposerScreenState \cf2 extends \cf5 State<MimeComposerScreen> \{\
+  \cf2 final \cf7 _formKey \cf5 = \cf9 GlobalKey\cf5 <FormState>();\
+  \cf2 final \cf7 fromController \cf5 = \cf9 TextEditingController\cf5 ();\
+  \cf2 final \cf7 toController \cf5 = \cf9 TextEditingController\cf5 ();\
+  \cf2 final \cf7 subjectController \cf5 = \cf9 TextEditingController\cf5 ();\
+  \cf2 final \cf7 plainTextController \cf5 = \cf9 TextEditingController\cf5 ();\
+  \cf2 final \cf7 htmlTextController \cf5 = \cf9 TextEditingController\cf5 ();\
+\
+  \cf10 @override\
+  \cf2 void \cf9 initState\cf5 () \{\
+    \cf2 super\cf5 .initState();\
+    \cf2 if \cf5 (\cf7 widget\cf5 .\cf7 draftData \cf5 != \cf2 null\cf5 ) \{\
+      \cf7 fromController\cf5 .\cf7 text \cf5 = \cf7 widget\cf5 .\cf7 draftData\cf5 ![\cf4 'from'\cf5 ] ?? \cf4 ''\cf5 ;\
+      \cf7 toController\cf5 .\cf7 text \cf5 = \cf7 widget\cf5 .\cf7 draftData\cf5 ![\cf4 'to'\cf5 ] ?? \cf4 ''\cf5 ;\
+      \cf7 subjectController\cf5 .\cf7 text \cf5 = \cf7 widget\cf5 .\cf7 draftData\cf5 ![\cf4 'subject'\cf5 ] ?? \cf4 ''\cf5 ;\
+      \cf7 plainTextController\cf5 .\cf7 text \cf5 = \cf7 widget\cf5 .\cf7 draftData\cf5 ![\cf4 'plainText'\cf5 ] ?? \cf4 ''\cf5 ;\
+      \cf7 htmlTextController\cf5 .\cf7 text \cf5 = \cf7 widget\cf5 .\cf7 draftData\cf5 ![\cf4 'htmlText'\cf5 ] ?? \cf4 ''\cf5 ;\
+    \} \cf2 else \cf5 \{\
+      \cf7 fromController\cf5 .\cf7 text \cf5 = \cf7 widget\cf5 .\cf7 defaultFromEmail\cf5 ;\
+    \}\
+  \}\
+\
+  \cf10 @override\
+  \cf2 void \cf9 dispose\cf5 () \{\
+    \cf7 fromController\cf5 .dispose();\
+    \cf7 toController\cf5 .dispose();\
+    \cf7 subjectController\cf5 .dispose();\
+    \cf7 plainTextController\cf5 .dispose();\
+    \cf7 htmlTextController\cf5 .dispose();\
+    \cf2 super\cf5 .dispose();\
+  \}\
+\
+  \cf10 @override\
+  \cf5 Widget \cf9 build\cf5 (BuildContext context) \{\
+    \cf2 return \cf9 Scaffold\cf5 (\
+      appBar: \cf9 AppBar\cf5 (\
+        title: \cf2 const \cf9 Text\cf5 (\cf4 'Compose Email'\cf5 ),\
+        backgroundColor: Colors.
+\f1\i \cf7 teal
+\f0\i0 \cf5 ,\
+      ),\
+      body: \cf9 Padding\cf5 (\
+        padding: \cf2 const \cf9 EdgeInsets\cf5 .\cf9 all\cf5 (\cf6 16\cf5 ),\
+        child: \cf9 Form\cf5 (\
+          key: \cf7 _formKey\cf5 ,\
+          child: \cf9 ListView\cf5 (\
+            children: [\
+              \cf9 TextFormField\cf5 (\
+                controller: \cf7 fromController\cf5 ,\
+                decoration: \cf2 const \cf9 InputDecoration\cf5 (labelText: \cf4 'From'\cf5 ),\
+                readOnly: \cf2 true\cf5 ,\
+              ),\
+              \cf2 const \cf9 SizedBox\cf5 (height: \cf6 10\cf5 ),\
+              \cf9 TextFormField\cf5 (\
+                controller: \cf7 toController\cf5 ,\
+                decoration: \cf2 const \cf9 InputDecoration\cf5 (labelText: \cf4 'To'\cf5 ),\
+                validator: (value) =>\
+                value == \cf2 null \cf5 || value.\cf7 isEmpty \cf5 ? \cf4 'Enter recipient' \cf5 : \cf2 null\cf5 ,\
+              ),\
+              \cf2 const \cf9 SizedBox\cf5 (height: \cf6 10\cf5 ),\
+              \cf9 TextFormField\cf5 (\
+                controller: \cf7 subjectController\cf5 ,\
+                decoration: \cf2 const \cf9 InputDecoration\cf5 (labelText: \cf4 'Subject'\cf5 ),\
+              ),\
+              \cf2 const \cf9 SizedBox\cf5 (height: \cf6 10\cf5 ),\
+              \cf9 TextFormField\cf5 (\
+                controller: \cf7 plainTextController\cf5 ,\
+                decoration: \cf2 const \cf9 InputDecoration\cf5 (labelText: \cf4 'Plain Text'\cf5 ),\
+                maxLines: \cf6 4\cf5 ,\
+              ),\
+              \cf2 const \cf9 SizedBox\cf5 (height: \cf6 10\cf5 ),\
+              \cf9 TextFormField\cf5 (\
+                controller: \cf7 htmlTextController\cf5 ,\
+                decoration: \cf2 const \cf9 InputDecoration\cf5 (labelText: \cf4 'HTML Body'\cf5 ),\
+                maxLines: \cf6 4\cf5 ,\
+              ),\
+              \cf2 const \cf9 SizedBox\cf5 (height: \cf6 20\cf5 ),\
+              \cf9 Row\cf5 (\
+                children: [\
+                  \cf9 Expanded\cf5 (\
+                    child: \cf9 ElevatedButton\cf5 (\
+                      onPressed: () \{\
+                        \cf2 if \cf5 (\cf7 _formKey\cf5 .\cf7 currentState\cf5 ?.validate() ?? \cf2 false\cf5 ) \{\
+                          \cf2 final \cf5 data = \{\
+                            \cf4 'from'\cf5 : \cf7 fromController\cf5 .\cf7 text\cf5 ,\
+                            \cf4 'to'\cf5 : \cf7 toController\cf5 .\cf7 text\cf5 ,\
+                            \cf4 'subject'\cf5 : \cf7 subjectController\cf5 .\cf7 text\cf5 ,\
+                            \cf4 'plainText'\cf5 : \cf7 plainTextController\cf5 .\cf7 text\cf5 ,\
+                            \cf4 'htmlText'\cf5 : \cf7 htmlTextController\cf5 .\cf7 text\cf5 ,\
+                          \};\
+                          Navigator.
+\f1\i \cf9 pop
+\f0\i0 \cf5 (context, data);\
+                        \}\
+                      \},\
+                      child: \cf2 const \cf9 Text\cf5 (\cf4 'Send'\cf5 ),\
+                    ),\
+                  ),\
+                  \cf2 const \cf9 SizedBox\cf5 (width: \cf6 10\cf5 ),\
+                  \cf9 Expanded\cf5 (\
+                    child: \cf9 ElevatedButton\cf5 (\
+                      onPressed: () \cf2 async \cf5 \{\
+                        \cf2 final \cf5 data = \{\
+                          \cf4 'from'\cf5 : \cf7 fromController\cf5 .\cf7 text\cf5 ,\
+                          \cf4 'to'\cf5 : \cf7 toController\cf5 .\cf7 text\cf5 ,\
+                          \cf4 'subject'\cf5 : \cf7 subjectController\cf5 .\cf7 text\cf5 ,\
+                          \cf4 'plainText'\cf5 : \cf7 plainTextController\cf5 .\cf7 text\cf5 ,\
+                          \cf4 'htmlText'\cf5 : \cf7 htmlTextController\cf5 .\cf7 text\cf5 ,\
+                        \};\
+                        \cf2 final \cf5 timestamp = \cf9 DateTime\cf5 .\cf9 now\cf5 ().\cf7 millisecondsSinceEpoch\cf5 .toString();\
+                        \cf2 await const \cf9 FlutterSecureStorage\cf5 ()\
+                            .write(key: \cf4 'draft_\cf5 $timestamp\cf4 '\cf5 , value: jsonEncode(data));\
+                        \cf2 if \cf5 (context.\cf7 mounted\cf5 ) \{\
+                          ScaffoldMessenger.
+\f1\i \cf9 of
+\f0\i0 \cf5 (context).showSnackBar(\
+                            \cf2 const \cf9 SnackBar\cf5 (content: \cf9 Text\cf5 (\cf4 'Draft saved'\cf5 )),\
+                          );\
+                          Navigator.
+\f1\i \cf9 pop
+\f0\i0 \cf5 (context);\
+                        \}\
+                      \},\
+                      child: \cf2 const \cf9 Text\cf5 (\cf4 'Save Draft'\cf5 ),\
+                    ),\
+                  ),\
+                ],\
+              )\
+            ],\
+          ),\
+        ),\
+      ),\
+    );\
+  \}\
+\}\
+\
+\cf2 class \cf5 MyMailApp \cf2 extends \cf5 StatelessWidget \{\
+  \cf2 const \cf5 MyMailApp(\{\cf2 super\cf5 .key\});\
+\
+  \cf10 @override\
+  \cf5 Widget \cf9 build\cf5 (BuildContext context) \{\
+    \cf2 return const \cf9 MaterialApp\cf5 (home: \cf9 LoginPage\cf5 ());\
+  \}\
+\}\
+\
+\cf2 class \cf5 LoginPage \cf2 extends \cf5 StatefulWidget \{\
+  \cf2 const \cf5 LoginPage(\{\cf2 super\cf5 .key\});\
+\
+  \cf10 @override\
+  \cf5 State<LoginPage> \cf9 createState\cf5 () => \cf9 _LoginPageState\cf5 ();\
+\}\
+\
+\cf2 class \cf5 _LoginPageState \cf2 extends \cf5 State<LoginPage> \{\
+  bool \cf7 _obscureText \cf5 = \cf2 true\cf5 ;\
+  \cf2 final \cf7 _formKey \cf5 = \cf9 GlobalKey\cf5 <FormState>();\
+  \cf2 final \cf7 _emailController \cf5 = \cf9 TextEditingController\cf5 ();\
+  \cf2 final \cf7 _passwordController \cf5 = \cf9 TextEditingController\cf5 ();\
+  \cf2 final \cf7 _storage \cf5 = \cf9 FlutterSecureStorage\cf5 ();\
+\
+  Future<\cf2 void\cf5 > \cf9 loginToServer\cf5 (String email, String password, BuildContext context) \cf2 async \cf5 \{\
+    \cf2 final \cf5 client = \cf9 ImapClient\cf5 (isLogEnabled: \cf2 true\cf5 );\
+\
+    \cf2 try \cf5 \{\
+      \cf2 await \cf5 client.connectToServer(\cf4 'qasid.iitk.ac.in'\cf5 , \cf6 993\cf5 , isSecure: \cf2 true\cf5 );\
+      \cf2 final \cf5 user = email.contains(\cf4 '@'\cf5 ) ? email.split(\cf4 '@'\cf5 ).\cf7 first \cf5 : email;\
+      \cf2 await \cf5 client.login(user, password);\
+\
+      \cf2 if \cf5 (client.\cf7 isLoggedIn\cf5 ) \{\
+        \cf2 await \cf7 _storage\cf5 .write(key: \cf4 'email'\cf5 , value: email);\
+        \cf2 await \cf7 _storage\cf5 .write(key: \cf4 'password'\cf5 , value: password);\
+\
+        \cf2 final \cf5 inbox = \cf2 await \cf5 client.selectInbox();\
+        \cf2 final \cf5 total = inbox?.\cf7 messagesExists \cf5 ?? \cf6 0\cf5 ;\
+        \cf2 final \cf5 startSeq = (total - number_of_mail_fetched + \cf6 1\cf5 ).clamp(\cf6 1\cf5 , total);\
+        \cf2 final \cf5 endSeq = total;\
+\
+        \cf2 final \cf5 fetchResult = \cf2 await \cf5 client.fetchMessages(\
+          \cf9 MessageSequence\cf5 .\cf9 fromRange\cf5 (startSeq, endSeq),\
+          \cf4 'BODY[]'\cf5 ,\
+        );\
+\
+        \cf2 final \cf5 messagesWithSequence = <MessageWithSequence>[];\
+        \cf2 for \cf5 (int i = \cf6 0\cf5 ; i < fetchResult.\cf7 messages\cf5 .\cf7 length\cf5 ; i++) \{\
+          \cf2 final \cf5 message = fetchResult.\cf7 messages\cf5 [i];\
+          \cf2 final \cf5 sequenceNumber = startSeq + i;\
+          messagesWithSequence.add(\cf9 MessageWithSequence\cf5 (\
+            message: message,\
+            sequenceNumber: sequenceNumber,\
+          ));\
+        \}\
+\
+        \cf2 final \cf5 reversedMessages = messagesWithSequence.\cf7 reversed\cf5 .toList();\
+\
+        \cf2 if \cf5 (\cf7 mounted\cf5 ) \{\
+          Navigator.
+\f1\i \cf9 pushReplacement
+\f0\i0 \cf5 (\
+            context,\
+            \cf9 MaterialPageRoute\cf5 (\
+              builder: (context) => \cf9 MessageListScreen\cf5 (\
+                messages: reversedMessages,\
+                mailboxName: \cf4 'INBOX'\cf5 ,\
+              ),\
+            ),\
+          );\
+        \}\
+      \} \cf2 else \cf5 \{\
+        \cf2 if \cf5 (\cf7 mounted\cf5 ) \{\
+          ScaffoldMessenger.
+\f1\i \cf9 of
+\f0\i0 \cf5 (context).showSnackBar(\
+            \cf2 const \cf9 SnackBar\cf5 (content: \cf9 Text\cf5 (\cf4 'Login failed.'\cf5 )),\
+          );\
+        \}\
+      \}\
+    \} \cf2 catch \cf5 (e) \{\
+      \cf2 if \cf5 (\cf7 mounted\cf5 ) \{\
+        ScaffoldMessenger.
+\f1\i \cf9 of
+\f0\i0 \cf5 (context).showSnackBar(\cf9 SnackBar\cf5 (content: \cf9 Text\cf5 (\cf4 'Error: \cf5 $e\cf4 '\cf5 )));\
+      \}\
+    \} \cf2 finally \cf5 \{\
+      \cf2 if \cf5 (client.\cf7 isLoggedIn\cf5 ) \{\
+        \cf2 await \cf5 client.disconnect();\
+      \}\
+    \}\
+  \}\
+\
+  \cf10 @override\
+  \cf5 Widget \cf9 build\cf5 (BuildContext context) \{\
+    \cf2 return \cf9 Scaffold\cf5 (\
+      body: \cf9 SingleChildScrollView\cf5 (\
+        child: \cf9 Column\cf5 (\
+          children: [\
+            \cf9 SizedBox\cf5 (height: MediaQuery.
+\f1\i \cf9 of
+\f0\i0 \cf5 (context).\cf7 size\cf5 .\cf7 height \cf5 * \cf6 0.2\cf5 ),\
+            \cf2 const \cf9 Text\cf5 (\cf4 'Login'\cf5 , style: \cf9 TextStyle\cf5 (fontSize: \cf6 35\cf5 , color: Colors.
+\f1\i \cf7 teal
+\f0\i0 \cf5 , fontWeight: FontWeight.
+\f1\i \cf7 bold
+\f0\i0 \cf5 )),\
+            \cf2 const \cf9 SizedBox\cf5 (height: \cf6 30\cf5 ),\
+            \cf9 Form\cf5 (\
+              key: \cf7 _formKey\cf5 ,\
+              child: \cf9 Column\cf5 (\
+                children: [\
+                  \cf9 Padding\cf5 (\
+                    padding: \cf2 const \cf9 EdgeInsets\cf5 .\cf9 symmetric\cf5 (horizontal: \cf6 15\cf5 ),\
+                    child: \cf9 TextFormField\cf5 (\
+                      controller: \cf7 _emailController\cf5 ,\
+                      decoration: \cf2 const \cf9 InputDecoration\cf5 (\
+                        labelText: \cf4 'Email'\cf5 ,\
+                        prefixIcon: \cf9 Icon\cf5 (Icons.
+\f1\i \cf7 email
+\f0\i0 \cf5 ),\
+                        border: \cf9 OutlineInputBorder\cf5 (),\
+                      ),\
+                      validator: (value) \{\
+                        \cf2 if \cf5 (value == \cf2 null \cf5 || value.\cf7 isEmpty\cf5 ) \{\
+                          \cf2 return \cf4 'Please enter Email'\cf5 ;\
+                        \} \cf2 else if \cf5 (!value.endsWith(\cf4 '@iitk.ac.in'\cf5 )) \{\
+                          \cf2 return \cf4 'Please enter a valid IITK email'\cf5 ;\
+                        \}\
+                        \cf2 return null\cf5 ;\
+                      \},\
+                    ),\
+                  ),\
+                  \cf2 const \cf9 SizedBox\cf5 (height: \cf6 30\cf5 ),\
+                  \cf9 Padding\cf5 (\
+                    padding: \cf2 const \cf9 EdgeInsets\cf5 .\cf9 symmetric\cf5 (horizontal: \cf6 15\cf5 ),\
+                    child: \cf9 TextFormField\cf5 (\
+                      controller: \cf7 _passwordController\cf5 ,\
+                      obscureText: \cf7 _obscureText\cf5 ,\
+                      decoration: \cf9 InputDecoration\cf5 (\
+                        labelText: \cf4 'Password'\cf5 ,\
+                        prefixIcon: \cf2 const \cf9 Icon\cf5 (Icons.
+\f1\i \cf7 lock
+\f0\i0 \cf5 ),\
+                        suffixIcon: \cf9 IconButton\cf5 (\
+                          icon: \cf9 Icon\cf5 (\cf7 _obscureText \cf5 ? Icons.
+\f1\i \cf7 visibility_off 
+\f0\i0 \cf5 : Icons.
+\f1\i \cf7 visibility
+\f0\i0 \cf5 ),\
+                          onPressed: () \{\
+                            setState(() \{\
+                              \cf7 _obscureText \cf5 = !\cf7 _obscureText\cf5 ;\
+                            \});\
+                          \},\
+                        ),\
+                        border: \cf2 const \cf9 OutlineInputBorder\cf5 (),\
+                      ),\
+                      validator: (value) => value == \cf2 null \cf5 || value.\cf7 isEmpty \cf5 ? \cf4 'Please enter password' \cf5 : \cf2 null\cf5 ,\
+                    ),\
+                  ),\
+                  \cf2 const \cf9 SizedBox\cf5 (height: \cf6 30\cf5 ),\
+                  \cf9 Padding\cf5 (\
+                    padding: \cf2 const \cf9 EdgeInsets\cf5 .\cf9 symmetric\cf5 (horizontal: \cf6 35\cf5 ),\
+                    child: \cf9 SizedBox\cf5 (\
+                      width: double.
+\f1\i \cf7 infinity
+\f0\i0 \cf5 ,\
+                      height: \cf6 50\cf5 ,\
+                      child: \cf9 ElevatedButton\cf5 (\
+                        style: ElevatedButton.
+\f1\i \cf9 styleFrom
+\f0\i0 \cf5 (\
+                          backgroundColor: Colors.
+\f1\i \cf7 teal
+\f0\i0 \cf5 ,\
+                          foregroundColor: Colors.
+\f1\i \cf7 white
+\f0\i0 \cf5 ,\
+                        ),\
+                        onPressed: () \cf2 async \cf5 \{\
+                          \cf2 if \cf5 (\cf7 _formKey\cf5 .\cf7 currentState\cf5 !.validate()) \{\
+                            \cf2 final \cf5 email = \cf7 _emailController\cf5 .\cf7 text\cf5 .trim();\
+                            \cf2 final \cf5 password = \cf7 _passwordController\cf5 .\cf7 text\cf5 ;\
+                            \cf2 await \cf5 loginToServer(email, password, context);\
+                          \}\
+                        \},\
+                        child: \cf2 const \cf9 Text\cf5 (\cf4 'Login'\cf5 ),\
+                      ),\
+                    ),\
+                  ),\
+                ],\
+              ),\
+            ),\
+          ],\
+        ),\
+      ),\
+    );\
+  \}\
+\}\
+\
+\cf2 class \cf5 MessageListScreen \cf2 extends \cf5 StatefulWidget \{\
+  \cf2 final \cf5 List<MessageWithSequence> \cf7 messages\cf5 ;\
+  \cf2 final \cf5 String \cf7 mailboxName\cf5 ;\
+\
+  \cf2 const \cf5 MessageListScreen(\{\cf2 super\cf5 .key, \cf2 required this\cf5 .\cf7 messages\cf5 , \cf2 required this\cf5 .\cf7 mailboxName\cf5 \});\
+\
+  \cf10 @override\
+  \cf5 State<MessageListScreen> \cf9 createState\cf5 () => \cf9 _MessageListScreenState\cf5 ();\
+\}\
+\
+\cf2 class \cf5 _MessageListScreenState \cf2 extends \cf5 State<MessageListScreen> \{\
+  \cf2 late \cf5 List<MessageWithSequence> \cf7 _messages\cf5 ;\
+  \cf2 late \cf5 List<MessageWithSequence> \cf7 _allMessages\cf5 ;\
+  int \cf7 _nextFetchEnd \cf5 = \cf6 0\cf5 ;\
+  bool \cf7 _isFetchingMore \cf5 = \cf2 false\cf5 ;\
+  \cf2 final \cf5 ScrollController \cf7 _scrollController \cf5 = \cf9 ScrollController\cf5 ();\
+  \cf2 final \cf5 TextEditingController \cf7 _searchController \cf5 = \cf9 TextEditingController\cf5 ();\
+  String \cf7 _searchQuery \cf5 = \cf4 ''\cf5 ;\
+\
+  bool \cf7 _isLoadingOlder \cf5 = \cf2 false\cf5 ;\
+  bool \cf7 _hasMore \cf5 = \cf2 true\cf5 ;\
+  bool \cf7 _showingStarredOnly \cf5 = \cf2 false\cf5 ;\
+\
+  \cf10 @override\
+  \cf2 void \cf9 initState\cf5 () \{\
+    \cf2 super\cf5 .initState();\
+    \cf7 _messages \cf5 = [];\
+    \cf7 _allMessages \cf5 = [];\
+    _loadInitialMessages();\
+    \cf7 _scrollController\cf5 .addListener(() \{\
+      \cf2 if \cf5 (\cf7 _scrollController\cf5 .\cf7 position\cf5 .\cf7 pixels \cf5 >= \cf7 _scrollController\cf5 .\cf7 position\cf5 .\cf7 maxScrollExtent \cf5 - \cf6 100\cf5 ) \{\
+        _loadOlderMessages();\
+      \}\
+    \});\
+  \}\
+\
+  Future<\cf2 void\cf5 > \cf9 _saveStarredMessages\cf5 () \cf2 async \cf5 \{\
+    \cf2 final \cf5 storage = \cf9 FlutterSecureStorage\cf5 ();\
+    \cf2 final \cf5 starredIds = \cf7 _allMessages\
+        \cf5 .where((m) => m.\cf7 isFlagged\cf5 )\
+        .map((m) => m.\cf7 sequenceNumber\cf5 .toString())\
+        .toList();\
+    \cf2 await \cf5 storage.write(key: \cf4 'starred'\cf5 , value: jsonEncode(starredIds));\
+  \}\
+\
+  Future<Set<int>> \cf9 _loadStarredMessages\cf5 () \cf2 async \cf5 \{\
+    \cf2 final \cf5 storage = \cf9 FlutterSecureStorage\cf5 ();\
+    \cf2 final \cf5 starredJson = \cf2 await \cf5 storage.read(key: \cf4 'starred'\cf5 );\
+    \cf2 if \cf5 (starredJson == \cf2 null\cf5 ) \cf2 return \cf5 \{\};\
+    \cf2 final \cf5 List<\cf2 dynamic\cf5 > starredList = jsonDecode(starredJson);\
+    \cf2 return \cf5 starredList.map((e) => int.
+\f1\i \cf9 tryParse
+\f0\i0 \cf5 (e.toString()) ?? -\cf6 1\cf5 ).where((e) => e >= \cf6 0\cf5 ).toSet();\
+  \}\
+\
+  Future<\cf2 void\cf5 > \cf9 _loadInitialMessages\cf5 () \cf2 async \cf5 \{\
+    \cf2 final \cf5 client = \cf9 ImapClient\cf5 (isLogEnabled: \cf2 true\cf5 );\
+    \cf2 try \cf5 \{\
+      \cf2 await \cf5 client.connectToServer(\cf4 'qasid.iitk.ac.in'\cf5 , \cf6 993\cf5 , isSecure: \cf2 true\cf5 );\
+      \cf2 final \cf5 email = \cf2 await const \cf9 FlutterSecureStorage\cf5 ().read(key: \cf4 'email'\cf5 );\
+      \cf2 final \cf5 password = \cf2 await const \cf9 FlutterSecureStorage\cf5 ().read(key: \cf4 'password'\cf5 );\
+      \cf2 if \cf5 (email == \cf2 null \cf5 || password == \cf2 null\cf5 ) \cf2 return\cf5 ;\
+\
+      \cf2 final \cf5 user = email.contains(\cf4 '@'\cf5 ) ? email.split(\cf4 '@'\cf5 ).\cf7 first \cf5 : email;\
+      \cf2 await \cf5 client.login(user, password);\
+      \cf2 final \cf5 mailboxes = \cf2 await \cf5 client.listMailboxes();\
+      \cf2 final \cf5 inbox = mailboxes.firstWhere((mb) => mb.\cf7 name \cf5 == \cf7 widget\cf5 .\cf7 mailboxName\cf5 );\
+      \cf2 await \cf5 client.selectMailbox(inbox);\
+\
+      \cf2 final \cf5 total = inbox.\cf7 messagesExists \cf5 ?? \cf6 0\cf5 ;\
+      \cf7 _nextFetchEnd \cf5 = (total - \cf6 2000\cf5 ).clamp(\cf6 1\cf5 , total);\
+\
+      \cf2 final \cf5 start = (total - \cf6 100 \cf5 + \cf6 1\cf5 ).clamp(\cf6 1\cf5 , total);\
+      \cf2 final \cf5 fetchResult = \cf2 await \cf5 client.fetchMessages(\
+        \cf9 MessageSequence\cf5 .\cf9 fromRange\cf5 (start, total),\
+        \cf4 'BODY[]'\cf5 ,\
+      );\
+\
+      \cf2 final \cf5 newMessages = \cf9 List\cf5 .\cf9 generate\cf5 (fetchResult.\cf7 messages\cf5 .\cf7 length\cf5 , (i) \{\
+        \cf2 return \cf9 MessageWithSequence\cf5 (\
+          message: fetchResult.\cf7 messages\cf5 [i],\
+          sequenceNumber: start + i,\
+        );\
+      \});\
+\
+      \cf2 final \cf5 starredSet = \cf2 await \cf5 _loadStarredMessages();\
+      \cf2 for \cf5 (\cf2 var \cf5 msg \cf2 in \cf5 newMessages) \{\
+        msg.\cf7 isFlagged \cf5 = starredSet.contains(msg.\cf7 sequenceNumber\cf5 );\
+      \}\
+\
+      setState(() \{\
+        \cf7 _messages \cf5 = newMessages.\cf7 reversed\cf5 .toList();\
+        \cf7 _allMessages \cf5 = \cf9 List\cf5 .\cf9 from\cf5 (\cf7 _messages\cf5 );\
+      \});\
+\
+      \cf2 await \cf5 client.disconnect();\
+      _loadMoreInBackground();\
+    \} \cf2 catch \cf5 (_) \{\}\
+  \}\
+\
+  Future<\cf2 void\cf5 > \cf9 _loadMoreInBackground\cf5 () \cf2 async \cf5 \{\
+    \cf2 while \cf5 (\cf7 _nextFetchEnd \cf5 > \cf6 0 \cf5 && !\cf7 _isFetchingMore\cf5 ) \{\
+      \cf7 _isFetchingMore \cf5 = \cf2 true\cf5 ;\
+      \cf2 final \cf5 client = \cf9 ImapClient\cf5 (isLogEnabled: \cf2 true\cf5 );\
+      \cf2 try \cf5 \{\
+        \cf2 await \cf5 client.connectToServer(\cf4 'qasid.iitk.ac.in'\cf5 , \cf6 993\cf5 , isSecure: \cf2 true\cf5 );\
+        \cf2 final \cf5 email = \cf2 await const \cf9 FlutterSecureStorage\cf5 ().read(key: \cf4 'email'\cf5 );\
+        \cf2 final \cf5 password = \cf2 await const \cf9 FlutterSecureStorage\cf5 ().read(key: \cf4 'password'\cf5 );\
+        \cf2 if \cf5 (email == \cf2 null \cf5 || password == \cf2 null\cf5 ) \cf2 return\cf5 ;\
+\
+        \cf2 final \cf5 user = email.contains(\cf4 '@'\cf5 ) ? email.split(\cf4 '@'\cf5 ).\cf7 first \cf5 : email;\
+        \cf2 await \cf5 client.login(user, password);\
+        \cf2 final \cf5 mailboxes = \cf2 await \cf5 client.listMailboxes();\
+        \cf2 final \cf5 inbox = mailboxes.firstWhere((mb) => mb.\cf7 name \cf5 == \cf7 widget\cf5 .\cf7 mailboxName\cf5 );\
+        \cf2 await \cf5 client.selectMailbox(inbox);\
+\
+        \cf2 final \cf5 total = inbox.\cf7 messagesExists \cf5 ?? \cf6 0\cf5 ;\
+        \cf2 final \cf5 end = \cf7 _nextFetchEnd\cf5 ;\
+        \cf2 final \cf5 start = (end - \cf6 100 \cf5 + \cf6 1\cf5 ).clamp((total - \cf6 2000\cf5 ).clamp(\cf6 1\cf5 , total), end);\
+        \cf7 _nextFetchEnd \cf5 = start - \cf6 1\cf5 ;\
+\
+        \cf2 final \cf5 fetchResult = \cf2 await \cf5 client.fetchMessages(\
+          \cf9 MessageSequence\cf5 .\cf9 fromRange\cf5 (start, end),\
+          \cf4 'BODY[]'\cf5 ,\
+        );\
+\
+        \cf2 final \cf5 newMessages = \cf9 List\cf5 .\cf9 generate\cf5 (fetchResult.\cf7 messages\cf5 .\cf7 length\cf5 , (i) \{\
+          \cf2 return \cf9 MessageWithSequence\cf5 (\
+            message: fetchResult.\cf7 messages\cf5 [i],\
+            sequenceNumber: start + i,\
+          );\
+        \});\
+\
+        setState(() \{\
+          \cf7 _messages\cf5 .addAll(newMessages.\cf7 reversed\cf5 );\
+          \cf7 _allMessages \cf5 = \cf9 List\cf5 .\cf9 from\cf5 (\cf7 _messages\cf5 );\
+        \});\
+\
+        \cf2 await \cf5 client.disconnect();\
+      \} \cf2 catch \cf5 (_) \{\
+        \cf2 break\cf5 ;\
+      \}\
+\
+      \cf7 _isFetchingMore \cf5 = \cf2 false\cf5 ;\
+      \cf2 await \cf9 Future\cf5 .\cf9 delayed\cf5 (\cf2 const \cf9 Duration\cf5 (milliseconds: \cf6 500\cf5 ));\
+    \}\
+  \}\
+\
+  Future<\cf2 void\cf5 > \cf9 _refreshMessages\cf5 () \cf2 async \cf5 \{\
+    \cf2 await \cf5 _loadInitialMessages();\
+  \}\
+\
+  Future<\cf2 void\cf5 > \cf9 _loadOlderMessages\cf5 () \cf2 async \cf5 \{\
+    \cf2 if \cf5 (!\cf7 _isFetchingMore\cf5 ) \{\
+      _loadMoreInBackground();\
+    \}\
+  \}\
+\
+  List<MessageWithSequence> \cf9 _filterMessages\cf5 () \{\
+    List<MessageWithSequence> baseList = \cf7 _showingStarredOnly\
+        \cf5 ? \cf7 _allMessages\cf5 .where((msg) => msg.\cf7 isFlagged\cf5 ).toList()\
+        : \cf7 _messages\cf5 ;\
+\
+    \cf2 if \cf5 (\cf7 _searchQuery\cf5 .\cf7 isEmpty\cf5 ) \cf2 return \cf5 baseList;\
+\
+    \cf2 return \cf5 baseList.where((m) \{\
+      \cf2 final \cf5 subject = m.\cf7 message\cf5 .decodeSubject()?.toLowerCase() ?? \cf4 ''\cf5 ;\
+      \cf2 final \cf5 sender = m.\cf7 message\cf5 .\cf7 from\cf5 ?.\cf7 firstOrNull\cf5 ?.toString().toLowerCase() ?? \cf4 ''\cf5 ;\
+      \cf2 return \cf5 subject.contains(\cf7 _searchQuery\cf5 ) || sender.contains(\cf7 _searchQuery\cf5 );\
+    \}).toList();\
+  \}\
+\
+  \cf10 @override\
+  \cf5 Widget \cf9 build\cf5 (BuildContext context) \{\
+    \cf2 return \cf9 Scaffold\cf5 (\
+      appBar: \cf9 PreferredSize\cf5 (\
+        preferredSize: \cf2 const \cf9 Size\cf5 .\cf9 fromHeight\cf5 (\cf6 120\cf5 ),\
+        child: \cf9 AppBar\cf5 (\
+          backgroundColor: Colors.
+\f1\i \cf7 teal
+\f0\i0 \cf5 ,\
+          flexibleSpace: \cf9 SafeArea\cf5 (\
+            child: \cf9 Padding\cf5 (\
+              padding: \cf2 const \cf9 EdgeInsets\cf5 .\cf9 fromLTRB\cf5 (\cf6 16\cf5 , \cf6 12\cf5 , \cf6 16\cf5 , \cf6 8\cf5 ),\
+              child: \cf9 Column\cf5 (\
+                crossAxisAlignment: CrossAxisAlignment.\cf7 start\cf5 ,\
+                children: [\
+                  \cf9 Text\cf5 (\
+                    \cf7 widget\cf5 .\cf7 mailboxName\cf5 ,\
+                    style: \cf2 const \cf9 TextStyle\cf5 (fontSize: \cf6 24\cf5 , fontWeight: FontWeight.
+\f1\i \cf7 bold
+\f0\i0 \cf5 , color: Colors.
+\f1\i \cf7 white
+\f0\i0 \cf5 ),\
+                  ),\
+                  \cf2 const \cf9 SizedBox\cf5 (height: \cf6 8\cf5 ),\
+                  \cf9 TextField\cf5 (\
+                    controller: \cf7 _searchController\cf5 ,\
+                    decoration: \cf2 const \cf9 InputDecoration\cf5 (\
+                      hintText: \cf4 'Search by subject or sender'\cf5 ,\
+                      hintStyle: \cf9 TextStyle\cf5 (color: Colors.
+\f1\i \cf7 white70
+\f0\i0 \cf5 ),\
+                      border: InputBorder.
+\f1\i \cf7 none
+\f0\i0 \cf5 ,\
+                      filled: \cf2 true\cf5 ,\
+                      fillColor: Colors.
+\f1\i \cf7 teal
+\f0\i0 \cf5 ,\
+                    ),\
+                    style: \cf2 const \cf9 TextStyle\cf5 (color: Colors.
+\f1\i \cf7 white
+\f0\i0 \cf5 ),\
+                    onChanged: (value) \{\
+                      setState(() \{\
+                        \cf7 _searchQuery \cf5 = value.toLowerCase();\
+                      \});\
+                    \},\
+                  ),\
+                ],\
+              ),\
+            ),\
+          ),\
+          actions: [\
+            \cf9 IconButton\cf5 (\
+              icon: \cf2 const \cf9 Icon\cf5 (Icons.
+\f1\i \cf7 logout
+\f0\i0 \cf5 ),\
+              onPressed: () \{\
+                Navigator.
+\f1\i \cf9 pushReplacement
+\f0\i0 \cf5 (\
+                  context,\
+                  \cf9 MaterialPageRoute\cf5 (builder: (context) => \cf2 const \cf9 LoginPage\cf5 ()),\
+                );\
+              \},\
+            ),\
+          ],\
+        ),\
+      ),\
+      body: \cf9 RefreshIndicator\cf5 (\
+        onRefresh: \cf9 _refreshMessages\cf5 ,\
+        child: \cf9 ListView\cf5 .\cf9 builder\cf5 (\
+          controller: \cf7 _scrollController\cf5 ,\
+          itemCount: _filterMessages().\cf7 length\cf5 ,\
+          itemBuilder: (context, index) \{\
+            \cf2 final \cf5 messageWithSeq = _filterMessages()[index];\
+            \cf2 final \cf5 message = messageWithSeq.\cf7 message\cf5 ;\
+            \cf2 return \cf9 ListTile\cf5 (\
+              title: \cf9 Text\cf5 (message.decodeSubject() ?? \cf4 'No Subject'\cf5 ),\
+              subtitle: \cf9 Text\cf5 (message.\cf7 from\cf5 ?.\cf7 firstOrNull\cf5 ?.toString() ?? \cf4 'Unknown sender'\cf5 ),\
+              trailing: \cf9 Row\cf5 (\
+                mainAxisSize: MainAxisSize.\cf7 min\cf5 ,\
+                children: [\
+                  \cf9 IconButton\cf5 (\
+                    icon: \cf9 Icon\cf5 (\
+                      messageWithSeq.\cf7 isFlagged \cf5 ? Icons.
+\f1\i \cf7 star 
+\f0\i0 \cf5 : Icons.
+\f1\i \cf7 star_border
+\f0\i0 \cf5 ,\
+                      color: messageWithSeq.\cf7 isFlagged \cf5 ? Colors.
+\f1\i \cf7 amber 
+\f0\i0 \cf5 : Colors.
+\f1\i \cf7 grey
+\f0\i0 \cf5 ,\
+                    ),\
+                    onPressed: () \{\
+                      setState(() \{\
+                        messageWithSeq.\cf7 isFlagged \cf5 = !messageWithSeq.\cf7 isFlagged\cf5 ;\
+                        \cf2 if \cf5 (\cf7 _showingStarredOnly \cf5 && !messageWithSeq.\cf7 isFlagged\cf5 ) \{\
+                          _refreshMessages();\
+                        \}\
+                      \});\
+                      _saveStarredMessages();\
+                    \},\
+                  ),\
+                  \cf9 Text\cf5 (\
+                    message.decodeDate()?.toLocal().toString().split(\cf4 ' '\cf5 ).\cf7 first \cf5 ?? \cf4 ''\cf5 ,\
+                    style: \cf2 const \cf9 TextStyle\cf5 (fontSize: \cf6 12\cf5 ),\
+                  ),\
+                ],\
+              ),\
+              onTap: () \{\
+                Navigator.
+\f1\i \cf9 push
+\f0\i0 \cf5 (\
+                  context,\
+                  \cf9 MaterialPageRoute\cf5 (\
+                    builder: (context) => \cf9 MessageDetailScreen\cf5 (message: message),\
+                  ),\
+                );\
+              \},\
+            );\
+          \},\
+        ),\
+      ),\
+      floatingActionButton: \cf9 Column\cf5 (\
+        mainAxisAlignment: MainAxisAlignment.\cf7 end\cf5 ,\
+        children: [\
+          \cf9 FloatingActionButton\cf5 (\
+            heroTag: \cf4 'draft'\cf5 ,\
+            onPressed: () \cf2 async \cf5 \{\
+              \cf2 final \cf5 allDrafts = \cf2 await const \cf9 FlutterSecureStorage\cf5 ().readAll();\
+              \cf2 final \cf5 draftEntries = allDrafts.\cf7 entries\
+                  \cf5 .where((entry) => entry.\cf7 key\cf5 .startsWith(\cf4 'draft_'\cf5 ))\
+                  .toList();\
+\
+              \cf2 if \cf5 (draftEntries.\cf7 isEmpty\cf5 ) \{\
+                ScaffoldMessenger.
+\f1\i \cf9 of
+\f0\i0 \cf5 (context).showSnackBar(\
+                  \cf2 const \cf9 SnackBar\cf5 (content: \cf9 Text\cf5 (\cf4 'No saved drafts found.'\cf5 )),\
+                );\
+                \cf2 return\cf5 ;\
+              \}\
+\
+              \cf2 await \cf5 showDialog(\
+              context: context,\
+              builder: (context) \{\
+              \cf2 return \cf9 SimpleDialog\cf5 (\
+              title: \cf2 const \cf9 Text\cf5 (\cf4 'Select Draft'\cf5 ),\
+              children: draftEntries.map((entry) \{\
+              \cf2 final \cf5 draftData = jsonDecode(entry.\cf7 value\cf5 );\
+              \cf2 final \cf5 subject = draftData[\cf4 'subject'\cf5 ] ?? \cf4 '(No Subject)'\cf5 ;\
+              \cf2 return \cf9 SimpleDialogOption\cf5 (\
+              onPressed: () \cf2 async \cf5 \{\
+              Navigator.
+\f1\i \cf9 pop
+\f0\i0 \cf5 (context);\
+              \cf2 final \cf5 email = \cf2 await const \cf9 FlutterSecureStorage\cf5 ().read(key: \cf4 'email'\cf5 );\
+              \cf2 if \cf5 (email == \cf2 null \cf5 || !context.\cf7 mounted\cf5 ) \cf2 return\cf5 ;\
+\
+              \cf2 final \cf5 result = \cf2 await \cf5 Navigator.
+\f1\i \cf9 push
+\f0\i0 \cf5 (\
+              context,\
+              \cf9 MaterialPageRoute\cf5 (\
+              builder: (context) => \cf9 MimeComposerScreen\cf5 (\
+              defaultFromEmail: email,\
+              draftData: \cf9 Map\cf5 <String, \cf2 dynamic\cf5 >.\cf9 from\cf5 (draftData),\
+              ),\
+              ),\
+              );\
+\
+              \cf2 if \cf5 (result != \cf2 null \cf5 && context.\cf7 mounted\cf5 ) \{\
+                \cf2 await \cf5 sendMimeMessageViaSmtp(result \cf2 as \cf5 Map<String, String>, context);\
+              \}\
+              \},\
+                child: \cf9 Text\cf5 (subject),\
+              );\
+              \}).toList(),\
+              );\
+              \},\
+              );\
+            \},\
+            backgroundColor: Colors.
+\f1\i \cf7 blueGrey
+\f0\i0 \cf5 ,\
+            child: \cf2 const \cf9 Icon\cf5 (Icons.
+\f1\i \cf7 drafts
+\f0\i0 \cf5 ),\
+          ),\
+          \cf2 const \cf9 SizedBox\cf5 (height: \cf6 10\cf5 ),\
+          \cf9 FloatingActionButton\cf5 (\
+            heroTag: \cf4 'filter'\cf5 ,\
+            onPressed: () \{\
+              setState(() \{\
+                \cf7 _showingStarredOnly \cf5 = !\cf7 _showingStarredOnly\cf5 ;\
+              \});\
+            \},\
+            backgroundColor: \cf7 _showingStarredOnly \cf5 ? Colors.
+\f1\i \cf7 orange 
+\f0\i0 \cf5 : Colors.
+\f1\i \cf7 green
+\f0\i0 \cf5 ,\
+            child: \cf2 const \cf9 Icon\cf5 (Icons.
+\f1\i \cf7 star
+\f0\i0 \cf5 ),\
+          ),\
+          \cf2 const \cf9 SizedBox\cf5 (height: \cf6 10\cf5 ),\
+          \cf9 FloatingActionButton\cf5 (\
+            heroTag: \cf4 'compose'\cf5 ,\
+            onPressed: () \cf2 async \cf5 \{\
+              \cf2 final \cf5 email = \cf2 await const \cf9 FlutterSecureStorage\cf5 ().read(key: \cf4 'email'\cf5 );\
+              \cf2 if \cf5 (email == \cf2 null \cf5 || !context.\cf7 mounted\cf5 ) \cf2 return\cf5 ;\
+\
+              \cf2 final \cf5 result = \cf2 await \cf5 Navigator.
+\f1\i \cf9 push
+\f0\i0 \cf5 (\
+                context,\
+                \cf9 MaterialPageRoute\cf5 (\
+                  builder: (context) => \cf9 MimeComposerScreen\cf5 (defaultFromEmail: email),\
+                ),\
+              );\
+\
+              \cf2 if \cf5 (result != \cf2 null \cf5 && context.\cf7 mounted\cf5 ) \{\
+                \cf2 await \cf5 sendMimeMessageViaSmtp(result \cf2 as \cf5 Map<String, String>, context);\
+              \}\
+            \},\
+            backgroundColor: Colors.
+\f1\i \cf7 teal
+\f0\i0 \cf5 ,\
+            child: \cf2 const \cf9 Icon\cf5 (Icons.
+\f1\i \cf7 edit
+\f0\i0 \cf5 ),\
+          ),\
+        ],\
+      ),\
+    );\
+  \}\
+\
+  \cf10 @override\
+  \cf2 void \cf9 dispose\cf5 () \{\
+    \cf7 _scrollController\cf5 .dispose();\
+    \cf7 _searchController\cf5 .dispose();\
+    \cf2 super\cf5 .dispose();\
+  \}\
+\}\
+\
+\cf2 class \cf5 MessageDetailScreen \cf2 extends \cf5 StatefulWidget \{\
+  \cf2 final \cf5 MimeMessage \cf7 message\cf5 ;\
+\
+  \cf2 const \cf5 MessageDetailScreen(\{\cf2 super\cf5 .key, \cf2 required this\cf5 .\cf7 message\cf5 \});\
+\
+  \cf10 @override\
+  \cf5 State<MessageDetailScreen> \cf9 createState\cf5 () => \cf9 _MessageDetailScreenState\cf5 ();\
+\}\
+\
+\cf2 class \cf5 _MessageDetailScreenState \cf2 extends \cf5 State<MessageDetailScreen> \{\
+  String \cf7 _plainTextBody \cf5 = \cf4 ''\cf5 ;\
+  String \cf7 _htmlBody \cf5 = \cf4 ''\cf5 ;\
+\
+  \cf10 @override\
+  \cf2 void \cf9 initState\cf5 () \{\
+    \cf2 super\cf5 .initState();\
+    loadBody();\
+  \}\
+\
+  Future<\cf2 void\cf5 > \cf9 loadBody\cf5 () \cf2 async \cf5 \{\
+    \cf7 _plainTextBody \cf5 = \cf2 await \cf7 widget\cf5 .\cf7 message\cf5 .decodeTextPlainPart() ?? \cf4 ''\cf5 ;\
+    \cf7 _htmlBody \cf5 = \cf2 await \cf7 widget\cf5 .\cf7 message\cf5 .decodeTextHtmlPart() ?? \cf4 ''\cf5 ;\
+    \cf2 if \cf5 (\cf7 mounted\cf5 ) \{\
+      setState(() \{\});\
+    \}\
+  \}\
+\
+  \cf10 @override\
+  \cf5 Widget \cf9 build\cf5 (BuildContext context) \{\
+    \cf2 final \cf5 message = \cf7 widget\cf5 .\cf7 message\cf5 ;\
+    \cf2 final \cf5 subject = message.decodeSubject() ?? \cf4 'No Subject'\cf5 ;\
+    \cf2 final \cf5 fromField = message.\cf7 from\cf5 ?.\cf7 firstOrNull\cf5 ;\
+    \cf2 final \cf5 from = fromField != \cf2 null\
+        \cf5 ? \cf4 '\cf5 $\{fromField.\cf7 personalName \cf5 ?? fromField.\cf7 email\cf5 \}\cf4  <\cf5 $\{fromField.\cf7 email\cf5 \}\cf4 >'\
+        \cf5 : \cf4 'Unknown sender'\cf5 ;\
+    \cf2 final \cf5 date = message.decodeDate()?.toLocal().toString() ?? \cf4 'Unknown date'\cf5 ;\
+\
+    \cf2 return \cf9 Scaffold\cf5 (\
+      appBar: \cf9 AppBar\cf5 (title: \cf2 const \cf9 Text\cf5 (\cf4 'Email Detail'\cf5 ), backgroundColor: Colors.
+\f1\i \cf7 teal
+\f0\i0 \cf5 ),\
+      body: \cf9 Padding\cf5 (\
+        padding: \cf2 const \cf9 EdgeInsets\cf5 .\cf9 all\cf5 (\cf6 16.0\cf5 ),\
+        child: \cf9 ListView\cf5 (\
+          children: [\
+            \cf9 Text\cf5 (subject, style: \cf2 const \cf9 TextStyle\cf5 (fontSize: \cf6 22\cf5 , fontWeight: FontWeight.
+\f1\i \cf7 bold
+\f0\i0 \cf5 )),\
+            \cf2 const \cf9 SizedBox\cf5 (height: \cf6 8\cf5 ),\
+            \cf9 Text\cf5 (\cf4 'From: \cf5 $from\cf4 '\cf5 ),\
+            \cf9 Text\cf5 (\cf4 'Date: \cf5 $date\cf4 '\cf5 ),\
+            \cf2 const \cf9 Divider\cf5 (height: \cf6 20\cf5 ),\
+            \cf7 _htmlBody\cf5 .\cf7 isNotEmpty\
+                \cf5 ? \cf9 Html\cf5 (\
+                    data: \cf7 _htmlBody\cf5 ,\
+                    extensions: [\
+                      \cf2 const \cf9 TableHtmlExtension\cf5 (),\
+                    ],\
+                  )\
+                : (\cf7 _plainTextBody\cf5 .\cf7 isNotEmpty\
+                    \cf5 ? \cf9 Text\cf5 (\cf7 _plainTextBody\cf5 )\
+                    : \cf2 const \cf9 Text\cf5 (\cf4 '(No content)'\cf5 ))\
+          ],\
+        ),\
+      ),\
+    );\
+  \}\
+\}\
+\
+Future<\cf2 void\cf5 > \cf8 sendMimeMessageViaSmtp\cf5 (\
+    Map<String, String> data, BuildContext context) \cf2 async \cf5 \{\
+  \cf2 try \cf5 \{\
+    \cf2 final \cf5 email = \cf2 await const \cf9 FlutterSecureStorage\cf5 ().read(key: \cf4 'email'\cf5 );\
+    \cf2 final \cf5 password = \cf2 await const \cf9 FlutterSecureStorage\cf5 ().read(key: \cf4 'password'\cf5 );\
+\
+    \cf2 if \cf5 (email == \cf2 null \cf5 || password == \cf2 null\cf5 ) \{\
+      ScaffoldMessenger.
+\f1\i \cf9 of
+\f0\i0 \cf5 (context).showSnackBar(\
+        \cf2 const \cf9 SnackBar\cf5 (content: \cf9 Text\cf5 (\cf4 'Missing email credentials.'\cf5 )),\
+      );\
+      \cf2 return\cf5 ;\
+    \}\
+\
+    \cf2 final \cf5 builder = \cf9 MessageBuilder\cf5 .\cf9 prepareMultipartAlternativeMessage\cf5 (\
+      plainText: data[\cf4 'plainText'\cf5 ] ?? \cf4 ''\cf5 ,\
+      htmlText: data[\cf4 'htmlText'\cf5 ] ?? \cf4 ''\cf5 ,\
+    )\
+      ..\cf7 from \cf5 = [\cf9 MailAddress\cf5 (data[\cf4 'displayName'\cf5 ] ?? data[\cf4 'from'\cf5 ]!, data[\cf4 'from'\cf5 ]!)]\
+      ..\cf7 to \cf5 = [\cf9 MailAddress\cf5 (\cf4 ''\cf5 , data[\cf4 'to'\cf5 ]!)]\
+      ..\cf7 subject \cf5 = data[\cf4 'subject'\cf5 ] ?? \cf4 'No Subject'\cf5 ;\
+\
+    \cf2 final \cf5 message = builder.buildMimeMessage();\
+\
+    \cf2 final \cf5 client = \cf9 SmtpClient\cf5 (\cf4 'mmtp.iitk.ac.in'\cf5 , isLogEnabled: \cf2 true\cf5 );\
+    \cf2 final \cf5 username = email.contains(\cf4 '@'\cf5 ) ? email.split(\cf4 '@'\cf5 ).\cf7 first \cf5 : email;\
+\
+    \cf2 await \cf5 client.connectToServer(\cf4 'mmtp.iitk.ac.in'\cf5 , \cf6 465\cf5 , isSecure: \cf2 true\cf5 );\
+    \cf2 await \cf5 client.ehlo();\
+\
+    \cf2 if \cf5 (client.\cf7 serverInfo\cf5 .supportsAuth(AuthMechanism.\cf7 plain\cf5 )) \{\
+      \cf2 await \cf5 client.authenticate(username, password, AuthMechanism.\cf7 plain\cf5 );\
+    \} \cf2 else if \cf5 (client.\cf7 serverInfo\cf5 .supportsAuth(AuthMechanism.\cf7 login\cf5 )) \{\
+      \cf2 await \cf5 client.authenticate(username, password, AuthMechanism.\cf7 login\cf5 );\
+    \} \cf2 else \cf5 \{\
+      ScaffoldMessenger.
+\f1\i \cf9 of
+\f0\i0 \cf5 (context).showSnackBar(\
+        \cf2 const \cf9 SnackBar\cf5 (content: \cf9 Text\cf5 (\cf4 'No supported authentication mechanism.'\cf5 )),\
+      );\
+      \cf2 return\cf5 ;\
+    \}\
+\
+    \cf2 await \cf5 client.sendMessage(message);\
+    \cf2 await \cf5 client.quit();\
+\
+    ScaffoldMessenger.
+\f1\i \cf9 of
+\f0\i0 \cf5 (context).showSnackBar(\
+      \cf2 const \cf9 SnackBar\cf5 (content: \cf9 Text\cf5 (\cf4 'Email sent successfully.'\cf5 )),\
+    );\
+  \} \cf2 catch \cf5 (e) \{\
+    ScaffoldMessenger.
+\f1\i \cf9 of
+\f0\i0 \cf5 (context).showSnackBar(\
+      \cf9 SnackBar\cf5 (content: \cf9 Text\cf5 (\cf4 'Send failed: \cf5 $e\cf4 '\cf5 )),\
+    );\
+  \}\
+\}\
+\
+\
+}
